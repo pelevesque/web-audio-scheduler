@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Web Audio Scheduler</title>
+</head>
+<body>
+  <button id="play">play</button> <!-- AudioContext must be started by a user generated event. -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      document.getElementById('play').onclick = function() {
+        const audioContext = new AudioContext()
+        // Create and play a 440hz oscillator for 1 second.
+        const osc = audioContext.createOscillator()
+        osc.frequency.value = 440
+        osc.connect(audioContext.destination)
+        osc.start(audioContext.currentTime)
+        osc.stop(audioContext.currentTime + 1)
+      }
+    })
+  </script>
+</body>
+</html>

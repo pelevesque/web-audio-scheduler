@@ -63,17 +63,15 @@
     }
 
     AudioScheduler.prototype.play = function() {
-      console.log(this.scheduleInterval) // when this is removed, the error happens right away
-      // we need a way to break the loop
       while(
         this.eventsIndexNeedle < this.events.length &&
         (this.events[this.eventsIndexNeedle].time + this.startTimeOffset <
         this.audioContext.currentTime + (this.scheduleLookahead / 1000))
       ) {
-        this.callback(this.events[this.eventsIndexNeedle])
+        this.callback(this.events[this.eventsIndexNeedle], this.startTimeOffset)
         this.eventsIndexNeedle++
       }
-      this.timerID = setTimeout(this.play(), this.scheduleInterval)
+      this.timerID = setTimeout(() => { this.play() }, this.scheduleInterval)
     }
 
     /***************************************************************************
@@ -95,12 +93,12 @@
           { time: 8, data: 800 }
         ]
 
-        function callback(e) {
+        function callback(e, startTimeOffset) {
           const osc = audioContext.createOscillator()
           osc.frequency.value = e.data
           osc.connect(audioContext.destination)
-          osc.start(e.time)
-          osc.stop(e.time + 1)
+          osc.start(e.time + startTimeOffset)
+          osc.stop(e.time + startTimeOffset + 1)
         }
 
         scheduler = new AudioScheduler(audioContext, {

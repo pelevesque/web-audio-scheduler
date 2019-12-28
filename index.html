@@ -24,11 +24,6 @@
     *
     * This dual clock system (Javascript's setTimeout clock + web audio clock),
     * permits us to change the tempo and add events anytime during playback.
-    *
-    * TO DO
-    * - add events during playback
-    * - add tempo system
-    * - remove start/stop clicks
     ***************************************************************************/
     const AudioScheduler = function (audioContext, {
       scheduleInterval =  50,  // in milliseconds

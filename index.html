@@ -63,6 +63,7 @@
     AudioScheduler.prototype.play = function() {
       while(
         this.eventsIndexNeedle < this.events.length &&
+        typeof this.events[this.eventsIndexNeedle].time === "number" &&
         (this.events[this.eventsIndexNeedle].time + this.startTimeOffset <
         this.audioContext.currentTime + (this.scheduleLookahead / 1000))
       ) {

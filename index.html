@@ -126,18 +126,9 @@
         })
       }
 
-      document.getElementById('start').onclick = function() {
-        scheduler.start()
-      }
-
-      document.getElementById('stop').onclick = function() {
-        scheduler.stop()
-      }
-
-      document.getElementById('pause').onclick = function() {
-        scheduler.pause()
-      }
-
+      document.getElementById('start').onclick = () => { scheduler.start() }
+      document.getElementById('stop').onclick =  () => { scheduler.stop()  }
+      document.getElementById('pause').onclick = () => { scheduler.pause() }
     })
   </script>
 </body>

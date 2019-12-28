@@ -57,9 +57,7 @@
     AudioScheduler.prototype.start = function() {
       this.stop()
       this.reset()
-      if (this.events.length > 0) {
-        this.play()
-      }
+      this.play()
     }
 
     AudioScheduler.prototype.play = function() {

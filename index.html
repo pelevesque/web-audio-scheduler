@@ -87,18 +87,20 @@
         let audioContext = new AudioContext()
 
         const events = [
-          { time: 2, data: 200 },
-          { time: 4, data: 400 },
-          { time: 6, data: 600 },
-          { time: 8, data: 800 }
+          { time: 0.002, data: { freq: 600, dur: 0.2} },
+          { time: 1,     data: { freq: 200, dur: 0.2} },
+          { time: 1.1,   data: { freq: 257, dur: 0.2} },
+          { time: 2,     data: { freq: 300, dur: 0.8} },
+          { time: 3,     data: { freq: 400, dur: 0.1} },
+          { time: 4,     data: { freq: 500, dur: 1}   }
         ]
 
         function callback(e, startTimeOffset) {
           const osc = audioContext.createOscillator()
-          osc.frequency.value = e.data
+          osc.frequency.value = e.data.freq
           osc.connect(audioContext.destination)
           osc.start(e.time + startTimeOffset)
-          osc.stop(e.time + startTimeOffset + 1)
+          osc.stop(e.time + startTimeOffset + e.data.dur)
         }
 
         scheduler = new AudioScheduler(audioContext, {

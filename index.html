@@ -1,135 +1,135 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Web Audio Scheduler</title>
-</head>
-<body>
-  <button id="audio_on">audio on</button> <!-- AudioContext must be started by a user generated event. -->
-  <button id="start">start</button>
-  <button id="stop">stop</button>
-  <button id="pause">pause</button>
-  <script>
+  <head>
+    <meta charset="UTF-8">
+    <title>Web Audio Scheduler</title>
+  </head>
+  <body>
+    <button id="audio_on">audio on</button> <!-- AudioContext must be started by a user generated event. -->
+    <button id="start">start</button>
+    <button id="stop">stop</button>
+    <button id="pause">pause</button>
+    <script>
 
-    /***************************************************************************
-    * AudioScheduler
-    *
-    * Sends timed events to a callback using precise timing.
-    * @inspired by https://www.html5rocks.com/en/tutorials/audio/scheduling
-    *
-    * Javascript's setTimeout is used to create a recursive loop in which
-    * events are scheduled for the web audio clock. As often as indicated by
-    * the scheduleInterval variable, events are scheduled as far into the
-    * future as indicated by the scheduleLookahead variable.
-    *
-    * This dual clock system (Javascript's setTimeout clock + web audio clock),
-    * permits us to change the tempo and add events anytime during playback.
-    ***************************************************************************/
-    const AudioScheduler = function (audioContext, {
-      scheduleInterval =  50,  // in milliseconds
-      scheduleLookahead = 100, // in milliseconds
-      events = [],
-      callback = function(){}
-    } = {} ) {
-      this.audioContext = audioContext
-      this.scheduleInterval = scheduleInterval   // schedule new events at this interval
-      this.scheduleLookahead = scheduleLookahead // schedule new events this far into the future
-      this.events = events                       // an events object that must at least contain the time property for each event
-      this.callback = callback                   // a function used to play the events
-      this.eventsIndexNeedle                     // a needle used to go through the events index by index
-      this.timerID                               // used by clearTimeout() to identify the setTimeout timer
-      this.startTimeOffset                       // the offset between the time at audioContext creation and audioContext.currentTime
-    }
-
-    AudioScheduler.prototype.stop = function() {
-      if (this.audioContext.state === 'running') {
-        this.audioContext.suspend()
+      /***************************************************************************
+      * AudioScheduler
+      *
+      * Sends timed events to a callback using precise timing.
+      * @inspired by https://www.html5rocks.com/en/tutorials/audio/scheduling
+      *
+      * Javascript's setTimeout is used to create a recursive loop in which
+      * events are scheduled for the web audio clock. As often as indicated by
+      * the scheduleInterval variable, events are scheduled as far into the
+      * future as indicated by the scheduleLookahead variable.
+      *
+      * This dual clock system (Javascript's setTimeout clock + web audio clock),
+      * permits us to change the tempo and add events anytime during playback.
+      ***************************************************************************/
+      const AudioScheduler = function (audioContext, {
+        scheduleInterval =  50,  // in milliseconds
+        scheduleLookahead = 100, // in milliseconds
+        events = [],
+        callback = function(){}
+      } = {} ) {
+        this.audioContext = audioContext
+        this.scheduleInterval = scheduleInterval   // schedule new events at this interval
+        this.scheduleLookahead = scheduleLookahead // schedule new events this far into the future
+        this.events = events                       // an events object that must at least contain the time property for each event
+        this.callback = callback                   // a function used to play the events
+        this.eventsIndexNeedle                     // a needle used to go through the events index by index
+        this.timerID                               // used by clearTimeout() to identify the setTimeout timer
+        this.startTimeOffset                       // the offset between the time at audioContext creation and audioContext.currentTime
       }
-      clearTimeout(this.timerID)
-    }
 
-    AudioScheduler.prototype.reset = function() {
-      if(this.audioContext.state === 'suspended') {
-        this.audioContext.resume()
+      AudioScheduler.prototype.stop = function() {
+        if (this.audioContext.state === 'running') {
+          this.audioContext.suspend()
+        }
+        clearTimeout(this.timerID)
       }
-      this.eventsIndexNeedle = 0
-      this.timerID = null
-      this.startTimeOffset = this.audioContext.currentTime
-    }
 
-    AudioScheduler.prototype.start = function() {
-      this.stop()
-      this.reset()
-      this.play()
-    }
-
-    AudioScheduler.prototype.play = function() {
-      while(
-        this.eventsIndexNeedle < this.events.length &&
-        typeof this.events[this.eventsIndexNeedle].time === "number" &&
-        (this.events[this.eventsIndexNeedle].time + this.startTimeOffset <
-        this.audioContext.currentTime + (this.scheduleLookahead / 1000))
-      ) {
-        this.callback(this.events[this.eventsIndexNeedle], this.startTimeOffset)
-        this.eventsIndexNeedle++
+      AudioScheduler.prototype.reset = function() {
+        if(this.audioContext.state === 'suspended') {
+          this.audioContext.resume()
+        }
+        this.eventsIndexNeedle = 0
+        this.timerID = null
+        this.startTimeOffset = this.audioContext.currentTime
       }
-      this.timerID = setTimeout(() => { this.play() }, this.scheduleInterval)
-    }
 
-    AudioScheduler.prototype.pause = function() {
-      if (this.audioContext.state === 'running') {
-        this.audioContext.suspend()
-      } else if(this.audioContext.state === 'suspended') {
-        this.audioContext.resume()
+      AudioScheduler.prototype.start = function() {
+        this.stop()
+        this.reset()
+        this.play()
       }
-    }
 
-    /***************************************************************************
-    * AudioScheduler END
-    ***************************************************************************/
+      AudioScheduler.prototype.play = function() {
+        while(
+          this.eventsIndexNeedle < this.events.length &&
+          typeof this.events[this.eventsIndexNeedle].time === "number" &&
+          (this.events[this.eventsIndexNeedle].time + this.startTimeOffset <
+          this.audioContext.currentTime + (this.scheduleLookahead / 1000))
+        ) {
+          this.callback(this.events[this.eventsIndexNeedle], this.startTimeOffset)
+          this.eventsIndexNeedle++
+        }
+        this.timerID = setTimeout(() => { this.play() }, this.scheduleInterval)
+      }
 
-    document.addEventListener('DOMContentLoaded', function() {
+      AudioScheduler.prototype.pause = function() {
+        if (this.audioContext.state === 'running') {
+          this.audioContext.suspend()
+        } else if(this.audioContext.state === 'suspended') {
+          this.audioContext.resume()
+        }
+      }
 
-      let  scheduler
+      /***************************************************************************
+      * AudioScheduler END
+      ***************************************************************************/
 
-      // Turn AudioContext() on with a user generated event.
-      document.getElementById('audio_on').onclick = function() {
-        let audioContext = new AudioContext()
+      document.addEventListener('DOMContentLoaded', function() {
 
-        const events = [
-          { time: 0.002, data: { freq: 100,  dur: 0.2 } },
-          { time: 1,     data: { freq: 200,  dur: 0.2 } },
-          { time: 1.1,   data: { freq: 257,  dur: 0.2 } },
-          { time: 2,     data: { freq: 300,  dur: 0.8 } },
-          { time: 3,     data: { freq: 400,  dur: 0.1 } },
-          { time: 5,     data: { freq: 500,  dur: 1   } },
-          { time: 6,     data: { freq: 600,  dur: 0.2 } },
-          { time: 7,     data: { freq: 700,  dur: 0.2 } },
-          { time: 7.1,   data: { freq: 800,  dur: 0.2 } },
-          { time: 8,     data: { freq: 900,  dur: 0.8 } },
-          { time: 9,     data: { freq: 100,  dur: 0.1 } },
-          { time: 10,    data: { freq: 1100, dur: 1   } }
-        ]
+        let  scheduler
 
-        function callback(e, startTimeOffset) {
-          const osc = audioContext.createOscillator()
-          osc.frequency.value = e.data.freq
-          osc.connect(audioContext.destination)
-          const startTime = e.time + startTimeOffset
-          osc.start(startTime)
-          osc.stop(startTime + e.data.dur)
+        // Turn AudioContext() on with a user generated event.
+        document.getElementById('audio_on').onclick = function() {
+          let audioContext = new AudioContext()
+
+          const events = [
+            { time: 0.002, data: { freq: 100,  dur: 0.2 } },
+            { time: 1,     data: { freq: 200,  dur: 0.2 } },
+            { time: 1.1,   data: { freq: 257,  dur: 0.2 } },
+            { time: 2,     data: { freq: 300,  dur: 0.8 } },
+            { time: 3,     data: { freq: 400,  dur: 0.1 } },
+            { time: 5,     data: { freq: 500,  dur: 1   } },
+            { time: 6,     data: { freq: 600,  dur: 0.2 } },
+            { time: 7,     data: { freq: 700,  dur: 0.2 } },
+            { time: 7.1,   data: { freq: 800,  dur: 0.2 } },
+            { time: 8,     data: { freq: 900,  dur: 0.8 } },
+            { time: 9,     data: { freq: 100,  dur: 0.1 } },
+            { time: 10,    data: { freq: 1100, dur: 1   } }
+          ]
+
+          function callback(e, startTimeOffset) {
+            const osc = audioContext.createOscillator()
+            osc.frequency.value = e.data.freq
+            osc.connect(audioContext.destination)
+            const startTime = e.time + startTimeOffset
+            osc.start(startTime)
+            osc.stop(startTime + e.data.dur)
+          }
+
+          scheduler = new AudioScheduler(audioContext, {
+            events: events,
+            callback: callback
+          })
         }
 
-        scheduler = new AudioScheduler(audioContext, {
-          events: events,
-          callback: callback
-        })
-      }
-
-      document.getElementById('start').onclick = () => { scheduler.start() }
-      document.getElementById('stop' ).onclick = () => { scheduler.stop()  }
-      document.getElementById('pause').onclick = () => { scheduler.pause() }
-    })
-  </script>
-</body>
+        document.getElementById('start').onclick = () => { scheduler.start() }
+        document.getElementById('stop' ).onclick = () => { scheduler.stop()  }
+        document.getElementById('pause').onclick = () => { scheduler.pause() }
+      })
+    </script>
+  </body>
 </html>

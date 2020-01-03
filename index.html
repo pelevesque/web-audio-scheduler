@@ -102,8 +102,8 @@
 
         // Turn AudioContext() on with a user generated event.
         document.getElementById('audio_on').onclick = function() {
-          let audioContext = new AudioContext()
-          let audioNodes = []
+          const audioContext = new AudioContext()
+          const audioNodes = []
 
           const events = [
             { time: 0,   data: { freq: 400, dur: 0.5 } },

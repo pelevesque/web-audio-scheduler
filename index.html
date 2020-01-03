@@ -25,13 +25,14 @@
       * This dual clock system (Javascript's setTimeout clock + web audio clock),
       * permits us to change the tempo and add events anytime during playback.
       ***************************************************************************/
-      const AudioScheduler = function (audioContext, {
+      const AudioScheduler = function (audioContext, audioNodes, {
         scheduleInterval =  50,  // in milliseconds
         scheduleLookahead = 100, // in milliseconds
         events = [],
         callback = function(){}
       } = {} ) {
         this.audioContext = audioContext
+        this.audioNodes = audioNodes               // keep track of all created audio nodes so they can be stopped
         this.scheduleInterval = scheduleInterval   // schedule new events at this interval
         this.scheduleLookahead = scheduleLookahead // schedule new events this far into the future
         this.events = events                       // an events object that must at least contain the time property for each event
@@ -41,10 +42,17 @@
         this.startTimeOffset                       // the offset between the time at audioContext creation and audioContext.currentTime
       }
 
+      AudioScheduler.prototype._stopAllAudioNodes = function() {
+        for (let i = 0, len = this.audioNodes.length; i < len; i++) {
+          this.audioNodes[i].stop(0)
+        }
+      }
+
       AudioScheduler.prototype.stop = function() {
         if (this.audioContext.state === 'running') {
           this.audioContext.suspend()
         }
+        this._stopAllAudioNodes()
         clearTimeout(this.timerID)
       }
 
@@ -91,6 +99,7 @@
       document.addEventListener('DOMContentLoaded', function() {
 
         let  scheduler
+        let audioNodes = []
 
         // Turn AudioContext() on with a user generated event.
         document.getElementById('audio_on').onclick = function() {
@@ -112,6 +121,7 @@
 
           function callback(e, startTimeOffset) {
             const osc = audioContext.createOscillator()
+            audioNodes.push(osc) // add to audioNodes so it can be stopped by the scheduler
             osc.frequency.value = e.data.freq
             osc.connect(audioContext.destination)
             const startTime = e.time + startTimeOffset
@@ -119,7 +129,7 @@
             osc.stop(startTime + e.data.dur)
           }
 
-          scheduler = new AudioScheduler(audioContext, {
+          scheduler = new AudioScheduler(audioContext, audioNodes, {
             events: events,
             callback: callback
           })
